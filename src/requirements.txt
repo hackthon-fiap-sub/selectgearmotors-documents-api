@@ -1,0 +1,4 @@
+chardet==4.0.0
+jmespath==0.10.0
+reportlab
+boto3
