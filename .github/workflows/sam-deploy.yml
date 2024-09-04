@@ -14,6 +14,24 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    # Instalar Python 3.9
+    - name: Setup Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    # Instalar dependências
+    - name: Install dependencies
+      run: |
+        python --version
+        pip install --upgrade pip
+        pip install -r requirements.txt
+
+    # Instalar SAM CLI
+    - name: Install AWS SAM CLI
+      run: |
+        pip install aws-sam-cli
+  
     - name: Set up AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
