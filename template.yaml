@@ -1,21 +1,46 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  SQSArn:
+    Type: String
+    Description: "The ARN of the SNS Topic to receive notifications"
+
+  BucketArn:
+    Type: String
+    Description: "The Arn of the S3 bucket for storing documents"
+
+  BucketName:
+    Type: String
+    Description: "The name of the S3 bucket for storing documents"
+
 Resources:
   DocumentGeneratorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.lambda_handler
-      Runtime: python3.8
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
       CodeUri: src/
       MemorySize: 512
-      Timeout: 60
+      Timeout: 30  # Timeout da função Lambda ajustado para 30 segundos
       Role: !GetAtt DocumentGeneratorFunctionRole.Arn  # Usando a Role criada abaixo
       Events:
         SQSTrigger:
           Type: SQS
           Properties:
-            Queue: arn:aws:sqs:us-east-1:123456789012:selectgearmotors-documents-queue  # ARN da fila SQS existente
+            Queue: !Ref SQSArn
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref BucketName
 
+  # Remover a criação da fila DocumentQueue, pois a fila já existe
+# Grupo de logs do CloudWatch para a função Lambda
+  DocumentGeneratorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/DocumentGeneratorFunction
+      RetentionInDays: 7
+      
   # Criando a Role IAM e anexando a política inline diretamente
   DocumentGeneratorFunctionRole:
     Type: AWS::IAM::Role
@@ -37,7 +62,7 @@ Resources:
                   - sqs:ReceiveMessage
                   - sqs:DeleteMessage
                   - sqs:GetQueueAttributes
-                Resource: arn:aws:sqs:us-east-1:147397866377:selectgearmotors-documents-queue  # ARN da fila SQS
+                Resource: !Ref SQSArn
         - PolicyName: LambdaS3Policy
           PolicyDocument:
             Version: '2012-10-17'
@@ -47,4 +72,14 @@ Resources:
                   - s3:PutObject
                   - s3:GetObject
                   - s3:DeleteObject
-                Resource: arn:aws:s3:::selectgearmotors-documents-bucket/*
+                Resource: !Ref BucketArn
+        - PolicyName: LambdaCloudWatchLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*

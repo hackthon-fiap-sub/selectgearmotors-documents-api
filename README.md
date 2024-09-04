@@ -11,3 +11,20 @@ aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/14739786637
 
 sam local invoke "DocumentGeneratorFunction" -e event.json
 # selectgearmotors-documents-api
+
+Como rodar testes: python -m unittest discover tests
+
+
+python3 -m venv myenv
+linux:
+source myenv/bin/activate
+Windows:
+myenv\Scripts\activate
+
+pip install Flask>=2.0,<3.0
+pip install requests==2.25.1
+pip install -r requirements.txt -t ./src
+pip install -r requirements-test.txt
+pip install -r requirements-test.txt
+
+python3 -m unittest discover -s ./tests
